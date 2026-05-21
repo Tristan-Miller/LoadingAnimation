@@ -215,14 +215,17 @@ export abstract class BaseSketch {
   recomputeGrid() {
     const cfg = useStore.getState();
     const REF = BaseSketch.REF_DIM;
-    const baseStep = cfg.cellSize + cfg.gap;
+    // If a max-size is set, lay the grid out around that ceiling so the gap is
+    // preserved even when cells scale up to their largest state under the cursor.
+    const peakCell = cfg.cellSizeMax > 0 ? Math.max(cfg.cellSize, cfg.cellSizeMax) : cfg.cellSize;
+    const baseStep = peakCell + cfg.gap;
     this.cols = Math.max(1, Math.floor((REF + cfg.gap) / baseStep));
     this.rows = Math.max(1, Math.floor((REF + cfg.gap) / baseStep));
     // Uniform scale so square cells stay square if the canvas is non-square.
     this.gridScale = Math.min(this.width / REF, this.height / REF);
     this.cellPx = cfg.cellSize * this.gridScale;
     this.gap = cfg.gap * this.gridScale;
-    this.step = this.cellPx + this.gap;
+    this.step = peakCell * this.gridScale + this.gap;
     this.offsetX = (this.width - this.cols * this.step + this.gap) / 2;
     this.offsetY = (this.height - this.rows * this.step + this.gap) / 2;
   }
@@ -413,7 +416,7 @@ export abstract class BaseSketch {
       }
     }
 
-    if ((r === 'trail' || this.trail.length > 0) && this.trail.length > 0) {
+    if (r === 'trail' || this.trail.length > 0) {
       const now = performance.now();
       const tr = radius * 0.45;
       const tr2 = tr * tr;
@@ -430,8 +433,31 @@ export abstract class BaseSketch {
         const f = Math.pow(1 - dist / tr, falloff) * decay * strength;
         if (f > best) best = f;
       }
-      if (best > result.activationBoost) result.activationBoost = best;
-      if (best > result.tint) result.tint = best;
+      // Treat the live cursor as a non-decaying trail point so a static mouse
+      // still scales cells underneath it (rather than waiting for the trail
+      // history to decay and dimming back down).
+      if (r === 'trail' && this.cursor.inside && inf > 0.05) {
+        const dxv = cx - this.cursor.x;
+        const dyv = cy - this.cursor.y;
+        const d2 = dxv * dxv + dyv * dyv;
+        if (d2 <= tr2) {
+          const dist = Math.sqrt(d2);
+          const f = Math.pow(1 - dist / tr, falloff) * strength * inf;
+          if (f > best) best = f;
+        }
+      }
+      if (best > 0) {
+        if (best > result.activationBoost) result.activationBoost = Math.min(1, best);
+        if (best > result.tint) result.tint = Math.min(1, best);
+        // Push the cell toward cellSizeMax (rather than just cellPx) so the trail
+        // visibly grows to the configured peak instead of stopping at base size.
+        const cfgState = useStore.getState();
+        if (cfgState.cellSizeMax > 0 && cfgState.cellSizeMax > cfgState.cellSize) {
+          const peakRatio = cfgState.cellSizeMax / cfgState.cellSize;
+          const reach = Math.min(1, best);
+          result.scaleMod *= 1 + (peakRatio - 1) * reach;
+        }
+      }
     }
 
     if (r === 'ignite' || this.ignites.length > 0) {
@@ -621,7 +647,10 @@ export abstract class BaseSketch {
     // cells at the end so the shimmer overlay only tints the cells, not the bg.
     ctx.clearRect(0, 0, this.width, this.height);
 
-    const half = this.cellPx / 2;
+    // Center within the slot: each slot is `step` wide and has `gap` of empty space,
+    // so the cell sits centered with (step - gap)/2 on each side. This stays correct
+    // whether or not a cellSizeMax has expanded the slot.
+    const half = (this.step - this.gap) / 2;
     const shape = cfg.cellShape;
     const tintEnabled = cfg.cursor.tint && cfg.cursor.reaction !== 'off';
     const tintThreshold = 0.08;
@@ -740,6 +769,26 @@ export abstract class BaseSketch {
       let intensity = cfg.shimmer.intensity;
       if (cfg.shimmer.followBreath && cfg.rhythm.breathing) {
         intensity *= breath;
+      }
+      // Shimmer pause: run one active sweep, then go dark for `pauseMs` ms.
+      // Active duration is fixed at 2000 ms — long enough for ~one palette cycle
+      // at default speed — and the slider controls the dark gap between sweeps.
+      // Fades the envelope in/out at the boundaries so the transition isn't a
+      // hard cut.
+      if (cfg.shimmer.pauseEnabled && cfg.shimmer.pauseMs > 0) {
+        const activeMs = 2000;
+        const cycle = activeMs + cfg.shimmer.pauseMs;
+        const t = ((realMs % cycle) + cycle) % cycle;
+        // User-configurable fade, capped so it can't eat the whole active or
+        // pause windows.
+        const fade = Math.min(cfg.shimmer.fadeMs, activeMs / 2, cfg.shimmer.pauseMs / 2);
+        let env: number;
+        if (t < fade) env = t / fade;
+        else if (t < activeMs - fade) env = 1;
+        else if (t < activeMs) env = (activeMs - t) / fade;
+        else env = 0;
+        env = env * env * (3 - 2 * env);
+        intensity *= env;
       }
       if (intensity > 0.001) {
         const grad = buildShimmerGradient(ctx, this.width, this.height, realMs, cfg.shimmer.speed);

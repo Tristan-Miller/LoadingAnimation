@@ -414,9 +414,6 @@ export function Sidebar() {
   const ModePanel = MODE_PANELS[activeMode].Comp;
   const modeTitle = MODE_PANELS[activeMode].title;
 
-  const shapeLayer = useStore((s) => s.shapeLayer);
-  const patchShapeLayer = useStore((s) => s.patchShapeLayer);
-
   const rhythm = useStore((s) => s.rhythm);
   const patchRhythm = useStore((s) => s.patchRhythm);
 
@@ -573,48 +570,6 @@ export function Sidebar() {
         <ModePanel />
       </Section>
 
-      <Section title="Shape layer">
-        <Segmented
-          label="Mode"
-          value={shapeLayer.mode}
-          options={[
-            { value: 'off', label: 'Off' },
-            { value: 'baked', label: 'Baked' },
-            { value: 'cyclical', label: 'Cyclical' },
-          ]}
-          onChange={(v) => patchShapeLayer({ mode: v })}
-        />
-        <Segmented
-          label="Shape"
-          value={shapeLayer.shape}
-          options={[
-            { value: 'v', label: 'V' },
-            { value: 'play', label: 'Play' },
-            { value: 'sparkle', label: 'Sparkle' },
-            { value: 'cycle', label: 'Cycle' },
-          ]}
-          onChange={(v) => patchShapeLayer({ shape: v })}
-        />
-        <Slider
-          label="Morph duration"
-          value={shapeLayer.morphDuration}
-          min={300}
-          max={4000}
-          step={100}
-          onChange={(v) => patchShapeLayer({ morphDuration: v })}
-          fmt={(v) => `${(v / 1000).toFixed(1)}s`}
-        />
-        <Slider
-          label="Contrast"
-          value={shapeLayer.contrast}
-          min={0}
-          max={1}
-          step={0.01}
-          onChange={(v) => patchShapeLayer({ contrast: v })}
-          fmt={(v) => v.toFixed(2)}
-        />
-      </Section>
-
       <Section title="Rhythm">
         <Segmented
           label="Canvas shape"
@@ -696,6 +651,29 @@ export function Sidebar() {
           label="Pulse with breath"
           value={shimmer.followBreath}
           onChange={(v) => patchShimmer({ followBreath: v })}
+        />
+        <Toggle
+          label="Pause between sweeps"
+          value={shimmer.pauseEnabled}
+          onChange={(v) => patchShimmer({ pauseEnabled: v })}
+        />
+        <Slider
+          label="Pause duration"
+          value={shimmer.pauseMs}
+          min={0}
+          max={3000}
+          step={25}
+          onChange={(v) => patchShimmer({ pauseMs: v })}
+          fmt={(v) => (v <= 0 ? 'none' : `${(v / 1000).toFixed(2)}s`)}
+        />
+        <Slider
+          label="Fade"
+          value={shimmer.fadeMs}
+          min={0}
+          max={1000}
+          step={10}
+          onChange={(v) => patchShimmer({ fadeMs: v })}
+          fmt={(v) => (v <= 0 ? 'hard' : `${(v / 1000).toFixed(2)}s`)}
         />
       </Section>
 

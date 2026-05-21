@@ -81,6 +81,12 @@ export interface ShimmerParams {
   speed: number;
   /** When true, intensity is multiplied by the breath curve so the shimmer pulses with the rhythm. */
   followBreath: boolean;
+  /** When true, shimmer plays for one active phase then goes dark for `pauseMs`. */
+  pauseEnabled: boolean;
+  /** Dark window between shimmer sweeps, in ms. Only used when pauseEnabled is true. */
+  pauseMs: number;
+  /** Fade-in / fade-out duration at the active phase boundaries, in ms. */
+  fadeMs: number;
 }
 export interface BackdropParams {
   /** Rendered size (px) of the animation overlay above the text. */
@@ -141,7 +147,7 @@ export const DEFAULTS: Config = {
     edgeNoise: 0,
     canvasShape: 'v',
   },
-  shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true },
+  shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true, pauseEnabled: false, pauseMs: 600, fadeMs: 400 },
   backdrop: { scale: 289, yPct: 37 },
   fullscreen: false,
   sidebarHidden: false,
@@ -171,7 +177,7 @@ const BUILT_IN_PRESETS: Preset[] = [
       cursor: { reaction: 'trail', radius: 300, strength: 2, falloff: 0.5, tint: false },
       performance: { targetFps: 60, showFps: false },
       rhythm: { breathing: true, breathPeriod: 3000, restMs: 0, edgeSoftness: 0, edgeNoise: 0, canvasShape: 'v' },
-      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true },
+      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true, pauseEnabled: false, pauseMs: 600, fadeMs: 400 },
     },
   },
   {
@@ -193,7 +199,7 @@ const BUILT_IN_PRESETS: Preset[] = [
       cursor: { reaction: 'swirl', radius: 201, strength: 0.65, falloff: 1.4, tint: false },
       performance: { targetFps: 60, showFps: false },
       rhythm: { breathing: true, breathPeriod: 2000, restMs: 0, edgeSoftness: 0, edgeNoise: 0, canvasShape: 'v' },
-      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true },
+      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true, pauseEnabled: false, pauseMs: 600, fadeMs: 400 },
     },
   },
   {
@@ -215,7 +221,7 @@ const BUILT_IN_PRESETS: Preset[] = [
       cursor: { reaction: 'distort', radius: 1200, strength: 1.65, falloff: 3.3, tint: false },
       performance: { targetFps: 60, showFps: false },
       rhythm: { breathing: true, breathPeriod: 2000, restMs: 0, edgeSoftness: 0, edgeNoise: 0, canvasShape: 'v' },
-      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true },
+      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true, pauseEnabled: false, pauseMs: 600, fadeMs: 400 },
     },
   },
   {
@@ -237,7 +243,7 @@ const BUILT_IN_PRESETS: Preset[] = [
       cursor: { reaction: 'trail', radius: 600, strength: 1.5, falloff: 0.5, tint: false },
       performance: { targetFps: 60, showFps: false },
       rhythm: { breathing: true, breathPeriod: 2000, restMs: 0, edgeSoftness: 0, edgeNoise: 0, canvasShape: 'v' },
-      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true },
+      shimmer: { enabled: true, intensity: 1, speed: 0.75, followBreath: true, pauseEnabled: false, pauseMs: 600, fadeMs: 400 },
     },
   },
 ];
