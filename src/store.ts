@@ -159,6 +159,28 @@ export const DEFAULTS: Config = {
  */
 const BUILT_IN_PRESETS: Preset[] = [
   {
+    name: 'Milans Recommendation',
+    createdAt: 1779380581248,
+    config: {
+      activeMode: 'flow',
+      cellShape: 'square',
+      cellSize: 14,
+      cellSizeMin: 5,
+      cellSizeMax: 0,
+      gap: 3,
+      invert: true,
+      flow: { noiseScale: 0.4, timeSpeed: 1, threshold: 0.48 },
+      life: { stepInterval: 40, seedDensity: 0.6, softDeath: true, spawnRate: 0.088 },
+      pulse: { waveSpeed: 1.2, wavelength: 90, waveCount: 2, origin: 'center' },
+      particles: { cycleSpeed: 1, particleCount: 220, trailLength: 14, shapeOrder: ['v', 'play', 'sparkle'] },
+      shapeLayer: { mode: 'off', shape: 'cycle', morphDuration: 1400, contrast: 0.7 },
+      cursor: { reaction: 'trail', radius: 200, strength: 1.5, falloff: 0.5, tint: false },
+      performance: { targetFps: 60, showFps: false },
+      rhythm: { breathing: false, breathPeriod: 2000, restMs: 0, edgeSoftness: 0, edgeNoise: 0, canvasShape: 'v' },
+      shimmer: { enabled: true, intensity: 1, speed: 1, followBreath: true, pauseEnabled: true, pauseMs: 1000, fadeMs: 800 },
+    },
+  },
+  {
     name: 'good v2',
     createdAt: 1779371881555,
     config: {
