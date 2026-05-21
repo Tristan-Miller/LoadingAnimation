@@ -358,14 +358,28 @@ function mergeConfig(base: Config, partial: Partial<Config>): Config {
 
 function loadPresets(): Preset[] {
   if (typeof window === 'undefined') return [...BUILT_IN_PRESETS];
+  let saved: Preset[] = [];
   try {
     const raw = localStorage.getItem(PRESETS_KEY);
-    if (!raw) return [...BUILT_IN_PRESETS];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as Preset[]) : [...BUILT_IN_PRESETS];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) saved = parsed as Preset[];
+    }
   } catch {
-    return [...BUILT_IN_PRESETS];
+    /* ignore */
   }
+  // Always show the built-ins. If the user already has a preset with the same
+  // name (possibly customised), keep their version; otherwise inject the
+  // built-in. Built-ins lead the list so they're discoverable; the user's
+  // additional saves follow in their original order. Deleting a built-in is
+  // therefore non-sticky — it comes back on the next load.
+  const builtInsInOrder = BUILT_IN_PRESETS.map(
+    (b) => saved.find((s) => s.name === b.name) ?? b,
+  );
+  const userOnly = saved.filter(
+    (s) => !BUILT_IN_PRESETS.some((b) => b.name === s.name),
+  );
+  return [...builtInsInOrder, ...userOnly];
 }
 
 function persistPresets(presets: Preset[]) {
